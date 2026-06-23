@@ -21,4 +21,11 @@ let snaps = [];      // [{ ts, label }] oldest -> newest
   tabId = tab.id;
   origin = originOf(tab.url);
   siteEl.textContent = new URL(origin).hostname;
+
+  snaps = await loadSnapshots(origin);
+  if (!snaps.length) {
+    whenEl.textContent = "no snapshots found for this page";
+    return;
+  }
+  whenEl.textContent = `${snaps.length} snapshots`;
 })();
