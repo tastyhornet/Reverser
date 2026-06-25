@@ -44,6 +44,18 @@ body {
 }
 .scrub #slider:disabled { opacity: 0.4; cursor: default; }
 
+.step {
+  font: inherit;
+  background: #24252c;
+  color: #ececf1;
+  border: 1px solid #34353d;
+  border-radius: 6px;
+  padding: 2px 9px;
+  cursor: pointer;
+}
+.step:hover { background: #2e2f37; }
+.step:disabled { opacity: 0.4; cursor: default; }
+
 .when {
   font-size: 17px;
   font-weight: 700;

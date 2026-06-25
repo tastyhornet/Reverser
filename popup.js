@@ -6,6 +6,8 @@ import { loadSnapshots } from "./js/wayback.js";
 const siteEl = document.getElementById("site");
 const whenEl = document.getElementById("when");
 const slider = document.getElementById("slider");
+const prevBtn = document.getElementById("prev");
+const nextBtn = document.getElementById("next");
 
 let tabId = null;
 let origin = null;   // the real url we're time-travelling
@@ -31,6 +33,8 @@ function go(i) {
   }, 300);
 }
 
+prevBtn.addEventListener("click", () => go(+slider.value - 1));
+nextBtn.addEventListener("click", () => go(+slider.value + 1));
 slider.addEventListener("input", () => go(+slider.value));
 
 (async () => {
@@ -55,5 +59,7 @@ slider.addEventListener("input", () => go(+slider.value));
   slider.max = String(snaps.length - 1);
   slider.value = String(snaps.length - 1);
   slider.disabled = false;
+  prevBtn.disabled = false;
+  nextBtn.disabled = false;
   label(snaps.length - 1);
 })();
