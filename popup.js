@@ -10,6 +10,8 @@ const slider = document.getElementById("slider");
 const prevBtn = document.getElementById("prev");
 const nextBtn = document.getElementById("next");
 const stopBtn = document.getElementById("stop");
+const loaderEl = document.getElementById("loader");
+const lheadEl = document.getElementById("lhead");
 
 let tabId = null;
 let origin = null;   // the real url we're time-travelling
@@ -33,7 +35,21 @@ function go(i) {
     const ts = snaps[+slider.value].ts;
     chrome.tabs.update(tabId, { url: `https://web.archive.org/web/${ts}/${origin}` });
     stopBtn.hidden = false;
+    startLoader();
   }, 300);
+}
+
+// "hold on while we take you back" panel, shown between the jump and the
+// archived page actually rendering.
+function startLoader() {
+  lheadEl.textContent = "Hold on while we take you back";
+  loaderEl.hidden = false;
+}
+
+// done loading - keep the panel up but swap it for a friendly landing message.
+function stopLoader() {
+  lheadEl.textContent = "There you go!";
+  loaderEl.hidden = false;
 }
 
 // drop out of the archive and back to the real page.
@@ -62,6 +78,8 @@ slider.addEventListener("input", () => go(+slider.value));
   siteEl.textContent = new URL(origin).hostname;
   logger.log("tab url:", tab.url, "| origin:", origin);
 
+  whenEl.textContent = "";
+  startLoader();
   const result = await loadSnapshots(origin);
   origin = result.matched;  // navigate using the url we actually found history for
   snaps = result.snaps;
@@ -70,6 +88,8 @@ slider.addEventListener("input", () => go(+slider.value));
     logger.warn("no snapshots after all fallbacks for", origin);
     return;
   }
+
+  stopLoader(); // history loaded, not loading anymore
 
   // one stop per snapshot, oldest on the left, newest on the right.
   slider.max = String(snaps.length - 1);
