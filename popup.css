@@ -78,6 +78,43 @@ body {
   min-height: 1.2em;
 }
 
+/* themed loader while a snapshot is loading - bold header + cycling text + dots */
+.loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #f0a23d;
+  margin-top: 12px;
+}
+.loader .lhead {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ececf1;
+  text-align: center;
+}
+.loader .lline {
+  display: flex;
+  align-items: flex-end;
+  font-size: 13px;
+  font-weight: 500;
+}
+.loader .dots {
+  display: inline-flex;
+  margin-left: 1px;
+}
+.loader .dots i {
+  display: inline-block;
+  font-style: normal;
+  animation: wave 1s ease-in-out infinite;
+}
+.loader .dots i:nth-child(2) { animation-delay: 0.15s; }
+.loader .dots i:nth-child(3) { animation-delay: 0.30s; }
+@keyframes wave {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-5px); }
+}
+
 .stop {
   width: 100%;
   font: inherit;
