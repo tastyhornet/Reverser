@@ -20,6 +20,7 @@ let origin = null;   // the real url we're time-travelling
 let snaps = [];      // [{ ts, label }] oldest -> newest
 let navTimer = null;
 let phraseTimer = null;
+let safetyTimer = null;
 
 // silly loading lines that cycle while something is loading
 const PHRASES = ["Time travelling", "Lightspeed", "1 hour = 7 years", "Dinosaurs"];
@@ -47,7 +48,7 @@ function go(i) {
 
 // "hold on while we take you back" panel, shown between the jump and the
 // archived page actually rendering.
-function startLoader() {
+function startLoader(maxMs = 8000) {
   let i = 0;
   lheadEl.textContent = "Hold on while we take you back";
   ltextEl.textContent = PHRASES[0];
@@ -58,11 +59,16 @@ function startLoader() {
     i = (i + 1) % PHRASES.length;
     ltextEl.textContent = PHRASES[i];
   }, 10000); // switch the line periodically
+  // archived pages with dead api calls can keep the tab "loading" forever, so
+  // never spin past this backstop.
+  clearTimeout(safetyTimer);
+  safetyTimer = setTimeout(stopLoader, maxMs);
 }
 
 // done loading - keep the panel up but swap it for a friendly landing message.
 function stopLoader() {
   clearInterval(phraseTimer);
+  clearTimeout(safetyTimer);
   phraseTimer = null;
   lheadEl.textContent = "There you go!";
   llineEl.style.display = "none";
@@ -96,7 +102,7 @@ slider.addEventListener("input", () => go(+slider.value));
   logger.log("tab url:", tab.url, "| origin:", origin);
 
   whenEl.textContent = "";
-  startLoader();
+  startLoader(25000); // the first lookup on a big site can take a while
   const result = await loadSnapshots(origin);
   origin = result.matched;  // navigate using the url we actually found history for
   snaps = result.snaps;
