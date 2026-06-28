@@ -7,7 +7,8 @@ import * as logger from "./logger.js";
 
 const CDX = "https://web.archive.org/cdx/search/cdx";
 
-// fetch monthly-collapsed successful captures for one exact match url.
+// fetch monthly-collapsed successful captures for one exact match url. throws on
+// network / parse trouble so the caller can decide what to do about it.
 async function cdxRows(matchUrl) {
   const params = new URLSearchParams({
     output: "json",
@@ -20,8 +21,31 @@ async function cdxRows(matchUrl) {
 
   const api = `${CDX}?${params.toString()}`;
   logger.log("CDX request:", api);
-  const res = await fetch(api);
-  const rows = await res.json();
+
+  let res;
+  try {
+    res = await fetch(api);
+  } catch (e) {
+    logger.error("fetch threw for", matchUrl, e);
+    throw new Error("network error reaching the wayback machine");
+  }
+
+  const ct = res.headers.get("content-type");
+  const text = await res.text();
+  logger.log(`CDX "${matchUrl}" -> ${res.status} ${res.statusText} | type=${ct} | ${text.length} bytes`);
+  logger.log("CDX body (first 300 chars):", text.slice(0, 300));
+
+  if (!res.ok) throw new Error(`cdx http ${res.status}: ${text.slice(0, 120)}`);
+
+  let rows;
+  try {
+    rows = JSON.parse(text);
+  } catch {
+    logger.error("CDX did not return JSON. full body below:");
+    logger.error(text);
+    throw new Error("cdx returned non-json (rate limit / error page?) - see console");
+  }
+
   const data = (rows && rows.length > 1) ? rows.slice(1) : [];
   logger.log(`CDX "${matchUrl}" parsed ${data.length} captures`);
   return data;
@@ -48,12 +72,16 @@ export async function loadSnapshots(url) {
   logger.log("origin url:", url, "| match attempts in order:", tries);
 
   for (const t of tries) {
-    const data = await cdxRows(t);
-    if (data.length) {
-      logger.log(`using "${t}" with ${data.length} snapshots`);
-      return { matched: t, snaps: data.map((r) => ({ ts: r[0], label: pretty(r[0]) })) };
+    try {
+      const data = await cdxRows(t);
+      if (data.length) {
+        logger.log(`using "${t}" with ${data.length} snapshots`);
+        return { matched: t, snaps: data.map((r) => ({ ts: r[0], label: pretty(r[0]) })) };
+      }
+      logger.warn(`0 snapshots for "${t}" - trying next`);
+    } catch (e) {
+      logger.warn(`cdx failed for "${t}":`, e.message);
     }
-    logger.warn(`0 snapshots for "${t}" - trying next`);
   }
   return { matched: url, snaps: [] };
 }

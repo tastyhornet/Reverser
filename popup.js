@@ -85,6 +85,15 @@ function stopLoader() {
   loaderEl.hidden = false;
 }
 
+// fully hide the loader (errors / nothing to show)
+function hideLoader() {
+  clearInterval(phraseTimer);
+  clearTimeout(safetyTimer);
+  phraseTimer = null;
+  navigating = false;
+  loaderEl.hidden = true;
+}
+
 // drop out of the archive and back to the real page.
 function backToLive() {
   chrome.tabs.update(tabId, { url: origin });
@@ -113,10 +122,19 @@ slider.addEventListener("input", () => go(+slider.value));
 
   whenEl.textContent = "";
   startLoader(25000); // the first lookup on a big site can take a while
-  const result = await loadSnapshots(origin);
+  let result;
+  try {
+    result = await loadSnapshots(origin);
+  } catch (e) {
+    hideLoader();
+    whenEl.textContent = "error: " + e.message;
+    logger.error("loadSnapshots failed:", e);
+    return;
+  }
   origin = result.matched;  // navigate using the url we actually found history for
   snaps = result.snaps;
   if (!snaps.length) {
+    hideLoader();
     whenEl.textContent = "no snapshots found for this page";
     logger.warn("no snapshots after all fallbacks for", origin);
     return;
