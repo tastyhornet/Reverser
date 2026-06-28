@@ -21,6 +21,7 @@ let snaps = [];      // [{ ts, label }] oldest -> newest
 let navTimer = null;
 let phraseTimer = null;
 let safetyTimer = null;
+let navigating = false;   // true only while a slider jump is in flight
 
 // silly loading lines that cycle while something is loading
 const PHRASES = ["Time travelling", "Lightspeed", "1 hour = 7 years", "Dinosaurs"];
@@ -42,9 +43,17 @@ function go(i) {
     const ts = snaps[+slider.value].ts;
     chrome.tabs.update(tabId, { url: `https://web.archive.org/web/${ts}/${origin}` });
     stopBtn.hidden = false;
+    navigating = true;
     startLoader();
   }, 300);
 }
+
+// hide the loader once the snapshot page actually finishes loading. scoped to a
+// real navigation so a stray "complete" from the live tab can't kill the loader
+// we show during the initial fetch.
+chrome.tabs.onUpdated.addListener((id, info) => {
+  if (navigating && id === tabId && info.status === "complete") stopLoader();
+});
 
 // "hold on while we take you back" panel, shown between the jump and the
 // archived page actually rendering.
@@ -70,6 +79,7 @@ function stopLoader() {
   clearInterval(phraseTimer);
   clearTimeout(safetyTimer);
   phraseTimer = null;
+  navigating = false;
   lheadEl.textContent = "There you go!";
   llineEl.style.display = "none";
   loaderEl.hidden = false;
