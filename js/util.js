@@ -27,3 +27,19 @@ export function pretty(ts) {
   const m = +ts.slice(4, 6) || 1;
   return `${MONTHS[m - 1]} ${y}`;
 }
+
+// run async work over a list with a small concurrency cap. preserves order in
+// the output even though the workers finish out of order.
+export async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let i = 0;
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++;
+      out[idx] = await fn(items[idx], idx);
+    }
+  }
+  const n = Math.min(limit, items.length);
+  await Promise.all(Array.from({ length: n }, worker));
+  return out;
+}

@@ -2,7 +2,7 @@
 // capture of a url, collapsed to one per month so the slider doesn't end up with
 // forty thousand stops on it.
 
-import { pretty } from "./util.js";
+import { pretty, mapLimit } from "./util.js";
 import { availableAt } from "./availability.js";
 import * as logger from "./logger.js";
 
@@ -68,11 +68,16 @@ function homepageOf(url) {
 // availability index instead.
 async function sampledTimeline(url) {
   const now = new Date().getFullYear();
-  const snaps = [];
+  const targets = [];
   for (let y = 1996; y <= now; y++) {
-    const ts = await availableAt(url, `${y}0601`); // sample mid-year, dodge edges
-    if (ts) snaps.push({ ts, label: pretty(ts) });
+    targets.push(`${y}0601`); // sample mid-year so we dodge edges
   }
+  logger.log(`sampling ${targets.length} years via availability api for`, url);
+
+  // thirty-odd lookups at once would get us rate limited, so fan out gently.
+  const stamps = await mapLimit(targets, 6, (ts) => availableAt(url, ts));
+  const snaps = stamps.filter(Boolean).map((ts) => ({ ts, label: pretty(ts) }));
+
   logger.log("sampled timeline:", snaps.length, "points");
   return snaps;
 }
