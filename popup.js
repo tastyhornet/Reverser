@@ -2,6 +2,7 @@
 
 import { isweb, originOf } from "./js/util.js";
 import { loadSnapshots } from "./js/wayback.js";
+import { NAV_DEBOUNCE_MS, LOADER_DEFAULT_MS, LOADER_LOOKUP_MS, PHRASE_ROTATE_MS, SNAPSHOT_PATH } from "./js/constants.js";
 import * as logger from "./js/logger.js";
 
 const siteEl = document.getElementById("site");
@@ -41,11 +42,11 @@ function go(i) {
   clearTimeout(navTimer);
   navTimer = setTimeout(() => {
     const ts = snaps[+slider.value].ts;
-    chrome.tabs.update(tabId, { url: `https://web.archive.org/web/${ts}/${origin}` });
+    chrome.tabs.update(tabId, { url: SNAPSHOT_PATH(ts, origin) });
     stopBtn.hidden = false;
     navigating = true;
     startLoader();
-  }, 300);
+  }, NAV_DEBOUNCE_MS);
 }
 
 // hide the loader once the snapshot page actually finishes loading. scoped to a
@@ -57,7 +58,7 @@ chrome.tabs.onUpdated.addListener((id, info) => {
 
 // "hold on while we take you back" panel, shown between the jump and the
 // archived page actually rendering.
-function startLoader(maxMs = 8000) {
+function startLoader(maxMs = LOADER_DEFAULT_MS) {
   let i = 0;
   lheadEl.textContent = "Hold on while we take you back";
   ltextEl.textContent = PHRASES[0];
@@ -67,7 +68,7 @@ function startLoader(maxMs = 8000) {
   phraseTimer = setInterval(() => {
     i = (i + 1) % PHRASES.length;
     ltextEl.textContent = PHRASES[i];
-  }, 10000); // switch the line periodically
+  }, PHRASE_ROTATE_MS); // switch the line periodically
   // archived pages with dead api calls can keep the tab "loading" forever, so
   // never spin past this backstop.
   clearTimeout(safetyTimer);
@@ -121,7 +122,7 @@ slider.addEventListener("input", () => go(+slider.value));
   logger.log("tab url:", tab.url, "| origin:", origin);
 
   whenEl.textContent = "";
-  startLoader(25000); // the first lookup on a big site can take a while
+  startLoader(LOADER_LOOKUP_MS); // the first lookup on a big site can take a while
   let result;
   try {
     result = await loadSnapshots(origin);

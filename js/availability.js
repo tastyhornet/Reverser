@@ -2,15 +2,14 @@
 // not a scan, so it works even on google-sized sites where the cdx collapse
 // query just times out. one call = "closest snapshot to this timestamp".
 
+import { AVAILABILITY_ENDPOINT } from "./constants.js";
 import * as logger from "./logger.js";
-
-const AVAILABILITY = "https://archive.org/wayback/available";
 
 // closest snapshot to a target timestamp. returns a timestamp string or null,
 // never throws - a single missing year shouldn't sink the whole sweep.
 export async function availableAt(url, ts) {
   const params = new URLSearchParams({ url, timestamp: ts });
-  const api = `${AVAILABILITY}?${params.toString()}`;
+  const api = `${AVAILABILITY_ENDPOINT}?${params.toString()}`;
   try {
     const res = await fetch(api);
     if (!res.ok) {
