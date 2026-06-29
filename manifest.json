@@ -4,7 +4,8 @@
   "version": "1.0",
   "description": "See what a website used to look like.",
   "permissions": [
-    "tabs"
+    "tabs",
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html",
