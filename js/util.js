@@ -18,3 +18,12 @@ export function originOf(url) {
   const m = /^https?:\/\/web\.archive\.org\/web\/\d+(?:\w{2,3}_)?\/(.+)$/.exec(url || "");
   return m ? m[1] : url;
 }
+
+// "Jun 2011" - month + year from a wayback stamp. captures are monthly so the
+// year is the thing that actually matters as you scrub.
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+export function pretty(ts) {
+  const y = ts.slice(0, 4);
+  const m = +ts.slice(4, 6) || 1;
+  return `${MONTHS[m - 1]} ${y}`;
+}
