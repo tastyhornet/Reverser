@@ -1,21 +1,22 @@
 // reverser popup - figures out what page you're on and looks up its history.
 
+import { el, show } from "./js/dom.js";
 import { isweb, originOf } from "./js/util.js";
 import { loadSnapshots } from "./js/wayback.js";
 import { NAV_DEBOUNCE_MS, LOADER_DEFAULT_MS, LOADER_LOOKUP_MS, PHRASE_ROTATE_MS, SNAPSHOT_PATH } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import * as logger from "./js/logger.js";
 
-const siteEl = document.getElementById("site");
-const whenEl = document.getElementById("when");
-const slider = document.getElementById("slider");
-const prevBtn = document.getElementById("prev");
-const nextBtn = document.getElementById("next");
-const stopBtn = document.getElementById("stop");
-const loaderEl = document.getElementById("loader");
-const lheadEl = document.getElementById("lhead");
-const llineEl = document.getElementById("lline");
-const ltextEl = document.getElementById("ltext");
+const siteEl = el("site");
+const whenEl = el("when");
+const slider = el("slider");
+const prevBtn = el("prev");
+const nextBtn = el("next");
+const stopBtn = el("stop");
+const loaderEl = el("loader");
+const lheadEl = el("lhead");
+const llineEl = el("lline");
+const ltextEl = el("ltext");
 
 let tabId = null;
 let origin = null;   // the real url we're time-travelling
@@ -44,7 +45,7 @@ function go(i) {
   navTimer = setTimeout(() => {
     const ts = snaps[+slider.value].ts;
     chrome.tabs.update(tabId, { url: SNAPSHOT_PATH(ts, origin) });
-    stopBtn.hidden = false;
+    show(stopBtn, true);
     navigating = true;
     startLoader();
   }, NAV_DEBOUNCE_MS);
@@ -64,7 +65,7 @@ function startLoader(maxMs = LOADER_DEFAULT_MS) {
   lheadEl.textContent = "Hold on while we take you back";
   ltextEl.textContent = PHRASES[0];
   llineEl.style.display = "";   // show the rotating line + waving dots
-  loaderEl.hidden = false;
+  show(loaderEl, true);
   clearInterval(phraseTimer);
   phraseTimer = setInterval(() => {
     i = (i + 1) % PHRASES.length;
@@ -84,7 +85,7 @@ function stopLoader() {
   navigating = false;
   lheadEl.textContent = "There you go!";
   llineEl.style.display = "none";
-  loaderEl.hidden = false;
+  show(loaderEl, true);
 }
 
 // fully hide the loader (errors / nothing to show)
@@ -93,7 +94,7 @@ function hideLoader() {
   clearTimeout(safetyTimer);
   phraseTimer = null;
   navigating = false;
-  loaderEl.hidden = true;
+  show(loaderEl, false);
 }
 
 // drop out of the archive and back to the real page.
@@ -118,7 +119,7 @@ slider.addEventListener("input", () => go(+slider.value));
   tabId = tab.id;
   origin = originOf(tab.url);
   // already sitting on an archived page? then offer the way back straight away.
-  if (origin !== tab.url) stopBtn.hidden = false;
+  if (origin !== tab.url) show(stopBtn, true);
   siteEl.textContent = new URL(origin).hostname;
   logger.log("tab url:", tab.url, "| origin:", origin);
 
