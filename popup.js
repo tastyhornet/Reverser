@@ -1,6 +1,6 @@
 // reverser popup - figures out what page you're on and looks up its history.
 
-import { el, show } from "./js/dom.js";
+import { el, show, setText, setEnabled } from "./js/dom.js";
 import { isweb, originOf } from "./js/util.js";
 import { loadSnapshots } from "./js/wayback.js";
 import { NAV_DEBOUNCE_MS, LOADER_DEFAULT_MS, LOADER_LOOKUP_MS, PHRASE_ROTATE_MS, SNAPSHOT_PATH } from "./js/constants.js";
@@ -30,7 +30,7 @@ let navigating = false;   // true only while a slider jump is in flight
 const PHRASES = ["Time travelling", "Lightspeed", "1 hour = 7 years", "Dinosaurs"];
 
 function label(i) {
-  whenEl.textContent = `${snaps[i].label}  ·  ${i + 1} of ${snaps.length}`;
+  setText(whenEl, `${snaps[i].label}  ·  ${i + 1} of ${snaps.length}`);
 }
 
 // move the real tab to a snapshot. this replaces the whole page with the
@@ -62,14 +62,14 @@ chrome.tabs.onUpdated.addListener((id, info) => {
 // archived page actually rendering.
 function startLoader(maxMs = LOADER_DEFAULT_MS) {
   let i = 0;
-  lheadEl.textContent = "Hold on while we take you back";
-  ltextEl.textContent = PHRASES[0];
+  setText(lheadEl, "Hold on while we take you back");
+  setText(ltextEl, PHRASES[0]);
   llineEl.style.display = "";   // show the rotating line + waving dots
   show(loaderEl, true);
   clearInterval(phraseTimer);
   phraseTimer = setInterval(() => {
     i = (i + 1) % PHRASES.length;
-    ltextEl.textContent = PHRASES[i];
+    setText(ltextEl, PHRASES[i]);
   }, PHRASE_ROTATE_MS); // switch the line periodically
   // archived pages with dead api calls can keep the tab "loading" forever, so
   // never spin past this backstop.
@@ -83,7 +83,7 @@ function stopLoader() {
   clearTimeout(safetyTimer);
   phraseTimer = null;
   navigating = false;
-  lheadEl.textContent = "There you go!";
+  setText(lheadEl, "There you go!");
   llineEl.style.display = "none";
   show(loaderEl, true);
 }
@@ -111,8 +111,8 @@ slider.addEventListener("input", () => go(+slider.value));
 (async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !isweb(tab.url)) {
-    siteEl.textContent = "no web page to reverse here";
-    whenEl.textContent = "";
+    setText(siteEl, "no web page to reverse here");
+    setText(whenEl, "");
     return;
   }
 
@@ -120,7 +120,7 @@ slider.addEventListener("input", () => go(+slider.value));
   origin = originOf(tab.url);
   // already sitting on an archived page? then offer the way back straight away.
   if (origin !== tab.url) show(stopBtn, true);
-  siteEl.textContent = new URL(origin).hostname;
+  setText(siteEl, new URL(origin).hostname);
   logger.log("tab url:", tab.url, "| origin:", origin);
 
   // use the cached result if we've already looked this site up this session
@@ -128,13 +128,13 @@ slider.addEventListener("input", () => go(+slider.value));
   if (result) {
     logger.log("using cached result for", origin, "-", result.snaps.length, "snapshots");
   } else {
-    whenEl.textContent = "";
+    setText(whenEl, "");
     startLoader(LOADER_LOOKUP_MS); // the first lookup on a big site can take a while
     try {
       result = await loadSnapshots(origin);
     } catch (e) {
       hideLoader();
-      whenEl.textContent = "error: " + e.message;
+      setText(whenEl, "error: " + e.message);
       logger.error("loadSnapshots failed:", e);
       return;
     }
@@ -144,7 +144,7 @@ slider.addEventListener("input", () => go(+slider.value));
   snaps = result.snaps;
   if (!snaps.length) {
     hideLoader();
-    whenEl.textContent = "no snapshots found for this page";
+    setText(whenEl, "no snapshots found for this page");
     logger.warn("no snapshots after all fallbacks for", origin);
     return;
   }
@@ -154,8 +154,6 @@ slider.addEventListener("input", () => go(+slider.value));
   // one stop per snapshot, oldest on the left, newest on the right.
   slider.max = String(snaps.length - 1);
   slider.value = String(snaps.length - 1);
-  slider.disabled = false;
-  prevBtn.disabled = false;
-  nextBtn.disabled = false;
+  setEnabled(true, slider, prevBtn, nextBtn);
   label(snaps.length - 1);
 })();
