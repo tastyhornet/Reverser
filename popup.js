@@ -3,6 +3,7 @@
 import { isweb, originOf } from "./js/util.js";
 import { loadSnapshots } from "./js/wayback.js";
 import { NAV_DEBOUNCE_MS, LOADER_DEFAULT_MS, LOADER_LOOKUP_MS, PHRASE_ROTATE_MS, SNAPSHOT_PATH } from "./js/constants.js";
+import { getCached, setCached } from "./js/cache.js";
 import * as logger from "./js/logger.js";
 
 const siteEl = document.getElementById("site");
@@ -121,16 +122,22 @@ slider.addEventListener("input", () => go(+slider.value));
   siteEl.textContent = new URL(origin).hostname;
   logger.log("tab url:", tab.url, "| origin:", origin);
 
-  whenEl.textContent = "";
-  startLoader(LOADER_LOOKUP_MS); // the first lookup on a big site can take a while
-  let result;
-  try {
-    result = await loadSnapshots(origin);
-  } catch (e) {
-    hideLoader();
-    whenEl.textContent = "error: " + e.message;
-    logger.error("loadSnapshots failed:", e);
-    return;
+  // use the cached result if we've already looked this site up this session
+  let result = await getCached(origin);
+  if (result) {
+    logger.log("using cached result for", origin, "-", result.snaps.length, "snapshots");
+  } else {
+    whenEl.textContent = "";
+    startLoader(LOADER_LOOKUP_MS); // the first lookup on a big site can take a while
+    try {
+      result = await loadSnapshots(origin);
+    } catch (e) {
+      hideLoader();
+      whenEl.textContent = "error: " + e.message;
+      logger.error("loadSnapshots failed:", e);
+      return;
+    }
+    if (result.snaps.length) setCached(origin, result);
   }
   origin = result.matched;  // navigate using the url we actually found history for
   snaps = result.snaps;
