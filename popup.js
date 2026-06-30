@@ -5,10 +5,17 @@ import { loadSnapshots } from "./js/wayback.js";
 
 const siteEl = document.getElementById("site");
 const whenEl = document.getElementById("when");
+const slider = document.getElementById("slider");
 
 let tabId = null;
 let origin = null;   // the real url we're time-travelling
 let snaps = [];      // [{ ts, label }] oldest -> newest
+
+function label(i) {
+  whenEl.textContent = `${snaps[i].label}  ·  ${i + 1} of ${snaps.length}`;
+}
+
+slider.addEventListener("input", () => label(+slider.value));
 
 (async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -27,5 +34,10 @@ let snaps = [];      // [{ ts, label }] oldest -> newest
     whenEl.textContent = "no snapshots found for this page";
     return;
   }
-  whenEl.textContent = `${snaps.length} snapshots`;
+
+  // one stop per snapshot, oldest on the left, newest on the right.
+  slider.max = String(snaps.length - 1);
+  slider.value = String(snaps.length - 1);
+  slider.disabled = false;
+  label(snaps.length - 1);
 })();
