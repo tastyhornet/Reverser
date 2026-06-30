@@ -8,6 +8,7 @@ const whenEl = document.getElementById("when");
 const slider = document.getElementById("slider");
 const prevBtn = document.getElementById("prev");
 const nextBtn = document.getElementById("next");
+const stopBtn = document.getElementById("stop");
 
 let tabId = null;
 let origin = null;   // the real url we're time-travelling
@@ -30,9 +31,17 @@ function go(i) {
   navTimer = setTimeout(() => {
     const ts = snaps[+slider.value].ts;
     chrome.tabs.update(tabId, { url: `https://web.archive.org/web/${ts}/${origin}` });
+    stopBtn.hidden = false;
   }, 300);
 }
 
+// drop out of the archive and back to the real page.
+function backToLive() {
+  chrome.tabs.update(tabId, { url: origin });
+  window.close();
+}
+
+stopBtn.addEventListener("click", backToLive);
 prevBtn.addEventListener("click", () => go(+slider.value - 1));
 nextBtn.addEventListener("click", () => go(+slider.value + 1));
 slider.addEventListener("input", () => go(+slider.value));
@@ -47,6 +56,8 @@ slider.addEventListener("input", () => go(+slider.value));
 
   tabId = tab.id;
   origin = originOf(tab.url);
+  // already sitting on an archived page? then offer the way back straight away.
+  if (origin !== tab.url) stopBtn.hidden = false;
   siteEl.textContent = new URL(origin).hostname;
 
   snaps = await loadSnapshots(origin);
