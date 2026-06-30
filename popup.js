@@ -15,7 +15,16 @@ function label(i) {
   whenEl.textContent = `${snaps[i].label}  ·  ${i + 1} of ${snaps.length}`;
 }
 
-slider.addEventListener("input", () => label(+slider.value));
+// move the real tab to a snapshot. this replaces the whole page with the
+// archived version - no iframe, so the old page renders natively.
+function go(i) {
+  i = Math.max(0, Math.min(snaps.length - 1, i));
+  slider.value = String(i);
+  label(i);
+  chrome.tabs.update(tabId, { url: `https://web.archive.org/web/${snaps[i].ts}/${origin}` });
+}
+
+slider.addEventListener("input", () => go(+slider.value));
 
 (async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
