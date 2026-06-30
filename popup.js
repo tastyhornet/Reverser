@@ -10,6 +10,7 @@ const slider = document.getElementById("slider");
 let tabId = null;
 let origin = null;   // the real url we're time-travelling
 let snaps = [];      // [{ ts, label }] oldest -> newest
+let navTimer = null;
 
 function label(i) {
   whenEl.textContent = `${snaps[i].label}  ·  ${i + 1} of ${snaps.length}`;
@@ -17,11 +18,17 @@ function label(i) {
 
 // move the real tab to a snapshot. this replaces the whole page with the
 // archived version - no iframe, so the old page renders natively.
+// debounced, since a drag fires this a lot and each one is a full page load off
+// a slow server.
 function go(i) {
   i = Math.max(0, Math.min(snaps.length - 1, i));
   slider.value = String(i);
   label(i);
-  chrome.tabs.update(tabId, { url: `https://web.archive.org/web/${snaps[i].ts}/${origin}` });
+  clearTimeout(navTimer);
+  navTimer = setTimeout(() => {
+    const ts = snaps[+slider.value].ts;
+    chrome.tabs.update(tabId, { url: `https://web.archive.org/web/${ts}/${origin}` });
+  }, 300);
 }
 
 slider.addEventListener("input", () => go(+slider.value));
