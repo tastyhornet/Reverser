@@ -31,6 +31,19 @@ body {
   margin: 0 0 12px;
 }
 
+/* slider */
+.scrub {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scrub #slider {
+  flex: 1;
+  accent-color: #f0a23d;
+  cursor: pointer;
+}
+.scrub #slider:disabled { opacity: 0.4; cursor: default; }
+
 .when {
   font-size: 17px;
   font-weight: 700;
