@@ -22,7 +22,28 @@ export function originOf(url) {
   return m ? m[1] : url;
 }
 
+// true when the tab is already sitting on an archived page (mid-reverse).
+export function isArchiveUrl(url) {
+  return /^https?:\/\/web\.archive\.org\/web\/\d+/.test(url || "");
+}
+
+// the wayback timestamp baked into an archive url, or null.
+export function timestampOf(url) {
+  const m = /\/web\/(\d{6,14})/.exec(url || "");
+  return m ? m[1] : null;
+}
+
 // build the snapshot url we navigate the tab to.
 export function archiveUrl(ts, origin) {
   return SNAPSHOT_PATH(ts, origin);
+}
+
+// the bare hostname, for the site label. falls back to the raw string if the url
+// won't parse (it always should by the time we call this, but be safe).
+export function hostnameOf(url) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
 }
