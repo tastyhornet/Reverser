@@ -1,60 +1,13 @@
-// talks to the wayback machine's cdx api. one request gets every successful
-// capture of a url, collapsed to one per month so the slider doesn't end up with
-// forty thousand stops on it.
+// the wayback machine plumbing: pick a match target, scan it through the cdx
+// api, and fall back to a year-by-year sweep when the scan can't cope.
 
 import { homepageOf } from "./urls.js";
 import { pretty } from "./format.js";
 import { mapLimit } from "./concurrency.js";
-import {
-  CDX_ENDPOINT, CDX_LIMIT, CDX_COLLAPSE, CDX_STATUS_FILTER,
-  SWEEP_START_YEAR, SWEEP_MONTH, SWEEP_DAY, SWEEP_CONCURRENCY,
-} from "./constants.js";
+import { SWEEP_START_YEAR, SWEEP_MONTH, SWEEP_DAY, SWEEP_CONCURRENCY } from "./constants.js";
+import { cdxRows } from "./cdx.js";
 import { availableAt } from "./availability.js";
 import * as logger from "./logger.js";
-
-// fetch monthly-collapsed successful captures for one exact match url. throws on
-// network / parse trouble so the caller can decide what to do about it.
-async function cdxRows(matchUrl) {
-  const params = new URLSearchParams({
-    output: "json",
-    fl: "timestamp",
-    filter: CDX_STATUS_FILTER,
-    collapse: CDX_COLLAPSE,
-    limit: String(CDX_LIMIT),
-    url: matchUrl,
-  });
-
-  const api = `${CDX_ENDPOINT}?${params.toString()}`;
-  logger.log("CDX request:", api);
-
-  let res;
-  try {
-    res = await fetch(api);
-  } catch (e) {
-    logger.error("fetch threw for", matchUrl, e);
-    throw new Error("network error reaching the wayback machine");
-  }
-
-  const ct = res.headers.get("content-type");
-  const text = await res.text();
-  logger.log(`CDX "${matchUrl}" -> ${res.status} ${res.statusText} | type=${ct} | ${text.length} bytes`);
-  logger.log("CDX body (first 300 chars):", text.slice(0, 300));
-
-  if (!res.ok) throw new Error(`cdx http ${res.status}: ${text.slice(0, 120)}`);
-
-  let rows;
-  try {
-    rows = JSON.parse(text);
-  } catch {
-    logger.error("CDX did not return JSON. full body below:");
-    logger.error(text);
-    throw new Error("cdx returned non-json (rate limit / error page?) - see console");
-  }
-
-  const data = (rows && rows.length > 1) ? rows.slice(1) : [];
-  logger.log(`CDX "${matchUrl}" parsed ${data.length} captures`);
-  return data;
-}
 
 // dedupe a pile of stamps down to one per year-month, oldest -> newest, and tag
 // each with its human label. neighbouring years often resolve to the same capture.
