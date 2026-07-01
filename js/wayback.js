@@ -2,6 +2,7 @@
 // capture of a url, collapsed to one per month so the slider doesn't end up with
 // forty thousand stops on it.
 
+import { homepageOf } from "./urls.js";
 import { pretty } from "./format.js";
 import { mapLimit } from "./concurrency.js";
 import {
@@ -53,17 +54,6 @@ async function cdxRows(matchUrl) {
   const data = (rows && rows.length > 1) ? rows.slice(1) : [];
   logger.log(`CDX "${matchUrl}" parsed ${data.length} captures`);
   return data;
-}
-
-// collapse a url to its homepage - deep links are often uncaptured even when the
-// site itself has twenty years of history.
-function homepageOf(url) {
-  try {
-    const u = new URL(url);
-    return `${u.protocol}//${u.host}/`;
-  } catch {
-    return null;
-  }
 }
 
 // dedupe a pile of stamps down to one per year-month, oldest -> newest, and tag
