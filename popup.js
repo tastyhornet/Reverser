@@ -60,7 +60,9 @@ slider.addEventListener("input", () => go(+slider.value));
   if (origin !== tab.url) stopBtn.hidden = false;
   siteEl.textContent = new URL(origin).hostname;
 
-  snaps = await loadSnapshots(origin);
+  const result = await loadSnapshots(origin);
+  origin = result.matched;  // navigate using the url we actually found history for
+  snaps = result.snaps;
   if (!snaps.length) {
     whenEl.textContent = "no snapshots found for this page";
     return;
