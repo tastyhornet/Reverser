@@ -2,6 +2,7 @@
 
 import { isweb, originOf } from "./js/util.js";
 import { loadSnapshots } from "./js/wayback.js";
+import * as logger from "./js/logger.js";
 
 const siteEl = document.getElementById("site");
 const whenEl = document.getElementById("when");
@@ -59,12 +60,14 @@ slider.addEventListener("input", () => go(+slider.value));
   // already sitting on an archived page? then offer the way back straight away.
   if (origin !== tab.url) stopBtn.hidden = false;
   siteEl.textContent = new URL(origin).hostname;
+  logger.log("tab url:", tab.url, "| origin:", origin);
 
   const result = await loadSnapshots(origin);
   origin = result.matched;  // navigate using the url we actually found history for
   snaps = result.snaps;
   if (!snaps.length) {
     whenEl.textContent = "no snapshots found for this page";
+    logger.warn("no snapshots after all fallbacks for", origin);
     return;
   }
 

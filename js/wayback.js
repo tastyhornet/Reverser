@@ -3,6 +3,7 @@
 // forty thousand stops on it.
 
 import { pretty } from "./util.js";
+import * as logger from "./logger.js";
 
 const CDX = "https://web.archive.org/cdx/search/cdx";
 
@@ -17,9 +18,13 @@ async function cdxRows(matchUrl) {
     url: matchUrl,
   });
 
-  const res = await fetch(`${CDX}?${params.toString()}`);
+  const api = `${CDX}?${params.toString()}`;
+  logger.log("CDX request:", api);
+  const res = await fetch(api);
   const rows = await res.json();
-  return (rows && rows.length > 1) ? rows.slice(1) : [];
+  const data = (rows && rows.length > 1) ? rows.slice(1) : [];
+  logger.log(`CDX "${matchUrl}" parsed ${data.length} captures`);
+  return data;
 }
 
 // collapse a url to its homepage - deep links are often uncaptured even when the
@@ -40,11 +45,15 @@ export async function loadSnapshots(url) {
   const home = homepageOf(url);
   if (home && home !== url) tries.push(home);
 
+  logger.log("origin url:", url, "| match attempts in order:", tries);
+
   for (const t of tries) {
     const data = await cdxRows(t);
     if (data.length) {
+      logger.log(`using "${t}" with ${data.length} snapshots`);
       return { matched: t, snaps: data.map((r) => ({ ts: r[0], label: pretty(r[0]) })) };
     }
+    logger.warn(`0 snapshots for "${t}" - trying next`);
   }
   return { matched: url, snaps: [] };
 }
