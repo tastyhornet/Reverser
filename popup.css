@@ -56,6 +56,18 @@ body {
 .step:hover { background: #2e2f37; }
 .step:disabled { opacity: 0.4; cursor: default; }
 
+/* old -> now orientation hints under the slider */
+.ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6f6b7b;
+  margin-top: 3px;
+  padding: 0 30px;
+}
+
 .when {
   font-size: 17px;
   font-weight: 700;
