@@ -3,6 +3,7 @@
 // forty thousand stops on it.
 
 import { pretty } from "./util.js";
+import { availableAt } from "./availability.js";
 import * as logger from "./logger.js";
 
 const CDX = "https://web.archive.org/cdx/search/cdx";
@@ -62,6 +63,20 @@ function homepageOf(url) {
   }
 }
 
+// the huge-site fallback. when the all-time cdx query times out (google.com 504s
+// it), we can't scan - so we sample one snapshot per year through the fast
+// availability index instead.
+async function sampledTimeline(url) {
+  const now = new Date().getFullYear();
+  const snaps = [];
+  for (let y = 1996; y <= now; y++) {
+    const ts = await availableAt(url, `${y}0601`); // sample mid-year, dodge edges
+    if (ts) snaps.push({ ts, label: pretty(ts) });
+  }
+  logger.log("sampled timeline:", snaps.length, "points");
+  return snaps;
+}
+
 // resolve a url to { matched, snaps }. `matched` is the url we actually found
 // history for, which the popup then navigates through.
 export async function loadSnapshots(url) {
@@ -70,6 +85,8 @@ export async function loadSnapshots(url) {
   if (home && home !== url) tries.push(home);
 
   logger.log("origin url:", url, "| match attempts in order:", tries);
+
+  let timedOut = false;
 
   for (const t of tries) {
     try {
@@ -80,8 +97,14 @@ export async function loadSnapshots(url) {
       }
       logger.warn(`0 snapshots for "${t}" - trying next`);
     } catch (e) {
-      logger.warn(`cdx failed for "${t}":`, e.message);
+      timedOut = true;
+      logger.warn(`cdx failed for "${t}":`, e.message, "- will try the year sweep");
     }
   }
-  return { matched: url, snaps: [] };
+
+  // the simple query gave nothing or timed out - sample the timeline instead.
+  const matched = home || url;
+  logger.log(timedOut ? "timed out," : "empty,", "falling back to availability sampling for", matched);
+  const snaps = await sampledTimeline(matched);
+  return { matched, snaps };
 }
