@@ -12,11 +12,17 @@ const nextBtn = document.getElementById("next");
 const stopBtn = document.getElementById("stop");
 const loaderEl = document.getElementById("loader");
 const lheadEl = document.getElementById("lhead");
+const llineEl = document.getElementById("lline");
+const ltextEl = document.getElementById("ltext");
 
 let tabId = null;
 let origin = null;   // the real url we're time-travelling
 let snaps = [];      // [{ ts, label }] oldest -> newest
 let navTimer = null;
+let phraseTimer = null;
+
+// silly loading lines that cycle while something is loading
+const PHRASES = ["Time travelling", "Lightspeed", "1 hour = 7 years", "Dinosaurs"];
 
 function label(i) {
   whenEl.textContent = `${snaps[i].label}  ·  ${i + 1} of ${snaps.length}`;
@@ -42,13 +48,24 @@ function go(i) {
 // "hold on while we take you back" panel, shown between the jump and the
 // archived page actually rendering.
 function startLoader() {
+  let i = 0;
   lheadEl.textContent = "Hold on while we take you back";
+  ltextEl.textContent = PHRASES[0];
+  llineEl.style.display = "";   // show the rotating line + waving dots
   loaderEl.hidden = false;
+  clearInterval(phraseTimer);
+  phraseTimer = setInterval(() => {
+    i = (i + 1) % PHRASES.length;
+    ltextEl.textContent = PHRASES[i];
+  }, 10000); // switch the line periodically
 }
 
 // done loading - keep the panel up but swap it for a friendly landing message.
 function stopLoader() {
+  clearInterval(phraseTimer);
+  phraseTimer = null;
   lheadEl.textContent = "There you go!";
+  llineEl.style.display = "none";
   loaderEl.hidden = false;
 }
 
