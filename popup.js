@@ -2,7 +2,7 @@
 
 import { el, show, setText, setEnabled } from "./js/dom.js";
 import { isweb, originOf, archiveUrl } from "./js/urls.js";
-import { loadSnapshots } from "./js/wayback.js";
+import { loadSnapshots } from "./js/snapshots.js";
 import { NAV_DEBOUNCE_MS, LOADER_DEFAULT_MS, LOADER_LOOKUP_MS, PHRASE_ROTATE_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import * as logger from "./js/logger.js";
