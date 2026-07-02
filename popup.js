@@ -3,8 +3,9 @@
 import { el, show, setText, setEnabled } from "./js/dom.js";
 import { isweb, originOf, archiveUrl } from "./js/urls.js";
 import { loadSnapshots } from "./js/snapshots.js";
-import { NAV_DEBOUNCE_MS, LOADER_DEFAULT_MS, LOADER_LOOKUP_MS, PHRASE_ROTATE_MS } from "./js/constants.js";
+import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
+import { createLoader } from "./js/loader.js";
 import * as logger from "./js/logger.js";
 
 const siteEl = el("site");
@@ -13,21 +14,18 @@ const slider = el("slider");
 const prevBtn = el("prev");
 const nextBtn = el("next");
 const stopBtn = el("stop");
-const loaderEl = el("loader");
-const lheadEl = el("lhead");
-const llineEl = el("lline");
-const ltextEl = el("ltext");
+
+const loaderUi = createLoader({
+  loader: el("loader"),
+  lhead: el("lhead"),
+  lline: el("lline"),
+  ltext: el("ltext"),
+});
 
 let tabId = null;
 let origin = null;   // the real url we're time-travelling
 let snaps = [];      // [{ ts, label }] oldest -> newest
 let navTimer = null;
-let phraseTimer = null;
-let safetyTimer = null;
-let navigating = false;   // true only while a slider jump is in flight
-
-// silly loading lines that cycle while something is loading
-const PHRASES = ["Time travelling", "Lightspeed", "1 hour = 7 years", "Dinosaurs"];
 
 function label(i) {
   setText(whenEl, `${snaps[i].label}  ·  ${i + 1} of ${snaps.length}`);
@@ -46,8 +44,8 @@ function go(i) {
     const ts = snaps[+slider.value].ts;
     chrome.tabs.update(tabId, { url: archiveUrl(ts, origin) });
     show(stopBtn, true);
-    navigating = true;
-    startLoader();
+    loaderUi.navigating = true;
+    loaderUi.start();
   }, NAV_DEBOUNCE_MS);
 }
 
@@ -55,47 +53,8 @@ function go(i) {
 // real navigation so a stray "complete" from the live tab can't kill the loader
 // we show during the initial fetch.
 chrome.tabs.onUpdated.addListener((id, info) => {
-  if (navigating && id === tabId && info.status === "complete") stopLoader();
+  if (loaderUi.navigating && id === tabId && info.status === "complete") loaderUi.stop();
 });
-
-// "hold on while we take you back" panel, shown between the jump and the
-// archived page actually rendering.
-function startLoader(maxMs = LOADER_DEFAULT_MS) {
-  let i = 0;
-  setText(lheadEl, "Hold on while we take you back");
-  setText(ltextEl, PHRASES[0]);
-  llineEl.style.display = "";   // show the rotating line + waving dots
-  show(loaderEl, true);
-  clearInterval(phraseTimer);
-  phraseTimer = setInterval(() => {
-    i = (i + 1) % PHRASES.length;
-    setText(ltextEl, PHRASES[i]);
-  }, PHRASE_ROTATE_MS); // switch the line periodically
-  // archived pages with dead api calls can keep the tab "loading" forever, so
-  // never spin past this backstop.
-  clearTimeout(safetyTimer);
-  safetyTimer = setTimeout(stopLoader, maxMs);
-}
-
-// done loading - keep the panel up but swap it for a friendly landing message.
-function stopLoader() {
-  clearInterval(phraseTimer);
-  clearTimeout(safetyTimer);
-  phraseTimer = null;
-  navigating = false;
-  setText(lheadEl, "There you go!");
-  llineEl.style.display = "none";
-  show(loaderEl, true);
-}
-
-// fully hide the loader (errors / nothing to show)
-function hideLoader() {
-  clearInterval(phraseTimer);
-  clearTimeout(safetyTimer);
-  phraseTimer = null;
-  navigating = false;
-  show(loaderEl, false);
-}
 
 // drop out of the archive and back to the real page.
 function backToLive() {
@@ -129,11 +88,11 @@ slider.addEventListener("input", () => go(+slider.value));
     logger.log("using cached result for", origin, "-", result.snaps.length, "snapshots");
   } else {
     setText(whenEl, "");
-    startLoader(LOADER_LOOKUP_MS); // the first lookup on a big site can take a while
+    loaderUi.start(LOADER_LOOKUP_MS); // the first lookup on a big site can take a while
     try {
       result = await loadSnapshots(origin);
     } catch (e) {
-      hideLoader();
+      loaderUi.hide();
       setText(whenEl, "error: " + e.message);
       logger.error("loadSnapshots failed:", e);
       return;
@@ -143,13 +102,13 @@ slider.addEventListener("input", () => go(+slider.value));
   origin = result.matched;  // navigate using the url we actually found history for
   snaps = result.snaps;
   if (!snaps.length) {
-    hideLoader();
+    loaderUi.hide();
     setText(whenEl, "no snapshots found for this page");
     logger.warn("no snapshots after all fallbacks for", origin);
     return;
   }
 
-  stopLoader(); // history loaded, not loading anymore
+  loaderUi.stop(); // history loaded, not loading anymore
 
   // one stop per snapshot, oldest on the left, newest on the right.
   slider.max = String(snaps.length - 1);
