@@ -3,7 +3,10 @@
 // forty thousand stops on it.
 
 import { pretty, mapLimit } from "./util.js";
-import { CDX_ENDPOINT } from "./constants.js";
+import {
+  CDX_ENDPOINT, CDX_LIMIT, CDX_COLLAPSE, CDX_STATUS_FILTER,
+  SWEEP_START_YEAR, SWEEP_MONTH, SWEEP_DAY, SWEEP_CONCURRENCY,
+} from "./constants.js";
 import { availableAt } from "./availability.js";
 import * as logger from "./logger.js";
 
@@ -13,9 +16,9 @@ async function cdxRows(matchUrl) {
   const params = new URLSearchParams({
     output: "json",
     fl: "timestamp",
-    filter: "statuscode:200",
-    collapse: "timestamp:6",
-    limit: "1000",
+    filter: CDX_STATUS_FILTER,
+    collapse: CDX_COLLAPSE,
+    limit: String(CDX_LIMIT),
     url: matchUrl,
   });
 
@@ -82,13 +85,13 @@ function toSnaps(stamps) {
 async function sampledTimeline(url) {
   const now = new Date().getFullYear();
   const targets = [];
-  for (let y = 1996; y <= now; y++) {
-    targets.push(`${y}0601`); // sample mid-year so we dodge edges
+  for (let y = SWEEP_START_YEAR; y <= now; y++) {
+    targets.push(`${y}${SWEEP_MONTH}${SWEEP_DAY}`);
   }
   logger.log(`sampling ${targets.length} years via availability api for`, url);
 
   // thirty-odd lookups at once would get us rate limited, so fan out gently.
-  const stamps = await mapLimit(targets, 6, (ts) => availableAt(url, ts));
+  const stamps = await mapLimit(targets, SWEEP_CONCURRENCY, (ts) => availableAt(url, ts));
   const snaps = toSnaps(stamps);
 
   logger.log("sampled timeline:", snaps.length, "points");
