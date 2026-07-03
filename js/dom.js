@@ -24,3 +24,15 @@ export function show(node, on = true) {
   if (node) node.hidden = !on;
   return node;
 }
+
+// set text only if it actually changed, to avoid pointless layout churn while a
+// slider drag fires updates dozens of times a second.
+export function setText(node, text) {
+  if (node && node.textContent !== text) node.textContent = text;
+  return node;
+}
+
+// enable / disable a batch of controls in one call.
+export function setEnabled(on, ...nodes) {
+  for (const n of nodes) if (n) n.disabled = !on;
+}
