@@ -3,10 +3,9 @@
 // forty thousand stops on it.
 
 import { pretty, mapLimit } from "./util.js";
+import { CDX_ENDPOINT } from "./constants.js";
 import { availableAt } from "./availability.js";
 import * as logger from "./logger.js";
-
-const CDX = "https://web.archive.org/cdx/search/cdx";
 
 // fetch monthly-collapsed successful captures for one exact match url. throws on
 // network / parse trouble so the caller can decide what to do about it.
@@ -20,7 +19,7 @@ async function cdxRows(matchUrl) {
     url: matchUrl,
   });
 
-  const api = `${CDX}?${params.toString()}`;
+  const api = `${CDX_ENDPOINT}?${params.toString()}`;
   logger.log("CDX request:", api);
 
   let res;
