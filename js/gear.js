@@ -74,6 +74,18 @@ export function toggle(key) {
   return set(key, !current[key]);
 }
 
+// reset everything back to a fresh install.
+export async function resetSettings() {
+  current = { ...DEFAULTS };
+  for (const [k, v] of Object.entries(current)) emit(k, v);
+  try {
+    await chrome.storage.local.set({ [SETTINGS_KEY]: current });
+  } catch (e) {
+    logger.warn("settings reset failed:", e.message);
+  }
+  return current;
+}
+
 // subscribe to changes. returns an unsubscribe fn. handler gets (key, value, all).
 export function onChange(handler) {
   listeners.add(handler);
