@@ -47,3 +47,14 @@ export function hostnameOf(url) {
     return url;
   }
 }
+
+// collapse a url to its homepage - protocol + host + "/". used as the fallback
+// match target when the exact url has no captures.
+export function homepageOf(url) {
+  try {
+    const u = new URL(url);
+    return `${u.protocol}//${u.host}/`;
+  } catch {
+    return null;
+  }
+}
