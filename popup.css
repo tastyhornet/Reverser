@@ -16,6 +16,20 @@ body {
   gap: 8px;
   margin-bottom: 8px;
 }
+.top h1 { flex: 1; } /* push the gear to the far right */
+
+.icon-btn {
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  background: transparent;
+  color: #9b97a6;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.icon-btn:hover { background: #24252c; color: #ececf1; }
 .logo { font-size: 18px; }
 .top h1 {
   font-size: 15px;
@@ -128,6 +142,56 @@ body {
   cursor: pointer;
 }
 .stop:hover { background: #e6493d; }
+
+/* settings drawer */
+.settings {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #34353d;
+}
+.settings h2 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #9b97a6;
+  margin: 0 0 8px;
+}
+.settings .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  padding: 4px 0;
+}
+.settings .row select {
+  font: inherit;
+  background: #24252c;
+  color: #ececf1;
+  border: 1px solid #34353d;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.settings .row.toggle { cursor: pointer; }
+.settings .row input[type="checkbox"] { accent-color: #f0a23d; cursor: pointer; }
+
+.settings-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+.ghost {
+  flex: 1;
+  font: inherit;
+  font-size: 12px;
+  background: transparent;
+  color: #9b97a6;
+  border: 1px solid #34353d;
+  border-radius: 6px;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+.ghost:hover { background: #24252c; color: #ececf1; }
 
 /* toast strip */
 .toast {
