@@ -3,7 +3,7 @@
 // forty thousand stops on it.
 
 import { pretty } from "./format.js";
-import { mapLimit } from "./util.js";
+import { mapLimit } from "./concurrency.js";
 import {
   CDX_ENDPOINT, CDX_LIMIT, CDX_COLLAPSE, CDX_STATUS_FILTER,
   SWEEP_START_YEAR, SWEEP_MONTH, SWEEP_DAY, SWEEP_CONCURRENCY,
