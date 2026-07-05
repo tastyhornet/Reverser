@@ -9,6 +9,7 @@
     <header class="top">
       <span class="logo">⏪</span>
       <h1>Reverser</h1>
+      <button id="gear" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
     </header>
 
     <p class="site" id="site">…</p>
@@ -34,6 +35,33 @@
     </div>
 
     <button id="stop" class="stop" hidden>⏹ Back to live page</button>
+
+    <!-- settings drawer, toggled by the gear -->
+    <section class="settings" id="settings" hidden>
+      <h2>Settings</h2>
+
+      <label class="row">
+        <span>Theme</span>
+        <select id="set-theme">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+          <option value="auto">Auto (OS)</option>
+        </select>
+      </label>
+
+      <label class="row toggle">
+        <span>Show stats</span>
+        <input type="checkbox" id="set-stats" />
+      </label>
+      <label class="row toggle">
+        <span>Verbose console logging</span>
+        <input type="checkbox" id="set-verbose" />
+      </label>
+
+      <div class="settings-actions">
+        <button id="reset-settings" class="ghost">Reset settings</button>
+      </div>
+    </section>
 
     <div class="toast" id="toast" hidden></div>
 
