@@ -1,7 +1,8 @@
 // gear.js - the settings ("gear" icon) engine. holds every user-tweakable
-// preference, the defaults, and a tiny get/set layer over chrome.storage.local so
-// the popup can read prefs synchronously after one load. everything behind the ⚙
-// button routes through here.
+// preference, the defaults, and a tiny get/set/subscribe layer over
+// chrome.storage.local so the popup can read prefs synchronously after one load
+// and re-render when they change. everything behind the ⚙ button routes through
+// here.
 
 import { SETTINGS_KEY } from "./constants.js";
 import * as logger from "./logger.js";
@@ -16,6 +17,7 @@ export const DEFAULTS = Object.freeze({
 
 // in-memory copy so the rest of the app reads prefs without awaiting every time.
 let current = { ...DEFAULTS };
+const listeners = new Set();
 
 // fold stored values over the defaults so a blob written by an older build (that
 // was missing keys) still comes back complete.
@@ -50,14 +52,15 @@ export function get(key) {
   return current[key];
 }
 
-// write one key and persist. fire-and-forget persistence - the in-memory value is
-// authoritative for the current popup session.
+// write one key, persist, and notify subscribers. fire-and-forget persistence -
+// the in-memory value is authoritative for the current popup session.
 export async function set(key, value) {
   if (!(key in DEFAULTS)) {
     logger.warn("ignoring unknown setting:", key);
     return current;
   }
   current = { ...current, [key]: value };
+  emit(key, value);
   try {
     await chrome.storage.local.set({ [SETTINGS_KEY]: current });
   } catch (e) {
@@ -69,4 +72,16 @@ export async function set(key, value) {
 // flip a boolean setting in one call.
 export function toggle(key) {
   return set(key, !current[key]);
+}
+
+// subscribe to changes. returns an unsubscribe fn. handler gets (key, value, all).
+export function onChange(handler) {
+  listeners.add(handler);
+  return () => listeners.delete(handler);
+}
+
+function emit(key, value) {
+  for (const fn of listeners) {
+    try { fn(key, value, current); } catch (e) { logger.warn("settings listener threw:", e); }
+  }
 }
