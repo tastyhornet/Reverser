@@ -128,3 +128,23 @@ body {
   cursor: pointer;
 }
 .stop:hover { background: #e6493d; }
+
+/* toast strip */
+.toast {
+  position: fixed;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  background: #24252c;
+  color: #ececf1;
+  border: 1px solid #34353d;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.toast.show { opacity: 1; transform: translateY(0); }

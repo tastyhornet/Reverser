@@ -26,3 +26,4 @@ export const NAV_DEBOUNCE_MS = 300;     // wait out a drag before navigating
 export const LOADER_DEFAULT_MS = 8000;  // spinner backstop for a normal jump
 export const LOADER_LOOKUP_MS = 25000;  // longer backstop for the first lookup
 export const PHRASE_ROTATE_MS = 10000;  // how often the loading line changes
+export const TOAST_MS = 2600;           // how long a toast sticks around

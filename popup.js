@@ -6,6 +6,7 @@ import { loadSnapshots } from "./js/snapshots.js";
 import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import { createLoader } from "./js/loader.js";
+import { mountToast } from "./js/toast.js";
 import * as logger from "./js/logger.js";
 
 const siteEl = el("site");
@@ -68,6 +69,8 @@ nextBtn.addEventListener("click", () => go(+slider.value + 1));
 slider.addEventListener("input", () => go(+slider.value));
 
 (async () => {
+  mountToast(el("toast"));
+
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !isweb(tab.url)) {
     setText(siteEl, "no web page to reverse here");
