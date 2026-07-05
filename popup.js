@@ -74,9 +74,11 @@ slider.addEventListener("input", () => go(+slider.value));
 (async () => {
   // settings have to be up before anything reads a pref.
   await gear.loadSettings();
+  logger.setVerbose(gear.get("verboseLogging"));
   initTheme();
   mountToast(el("toast"));
   initSettingsPanel();
+  gear.onChange((key) => { if (key === "verboseLogging") logger.setVerbose(gear.get("verboseLogging")); });
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !isweb(tab.url)) {
