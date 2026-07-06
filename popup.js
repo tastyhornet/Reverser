@@ -6,6 +6,7 @@ import { loadSnapshots } from "./js/snapshots.js";
 import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import { createLoader } from "./js/loader.js";
+import { createAutoplay } from "./js/autoplay.js";
 import { initTheme } from "./js/theme.js";
 import { mountToast } from "./js/toast.js";
 import * as gear from "./js/gear.js";
@@ -18,12 +19,22 @@ const slider = el("slider");
 const prevBtn = el("prev");
 const nextBtn = el("next");
 const stopBtn = el("stop");
+const playBtn = el("play");
+const controlsEl = el("controls");
 
 const loaderUi = createLoader({
   loader: el("loader"),
   lhead: el("lhead"),
   lline: el("lline"),
   ltext: el("ltext"),
+});
+
+// autoplay walks the slider forward on its own; it only knows an index + a step
+// callback, so navigation stays here in one place.
+const autoplay = createAutoplay({
+  step: (i) => go(i),
+  bounds: () => ({ index: +slider.value, max: snaps.length - 1 }),
+  onStop: () => setText(playBtn, "▶ Play"),
 });
 
 let tabId = null;
@@ -62,11 +73,16 @@ chrome.tabs.onUpdated.addListener((id, info) => {
 
 // drop out of the archive and back to the real page.
 function backToLive() {
+  autoplay.stop();
   chrome.tabs.update(tabId, { url: origin });
   window.close();
 }
 
 stopBtn.addEventListener("click", backToLive);
+playBtn.addEventListener("click", () => {
+  autoplay.toggle();
+  setText(playBtn, autoplay.running() ? "⏸ Pause" : "▶ Play");
+});
 prevBtn.addEventListener("click", () => go(+slider.value - 1));
 nextBtn.addEventListener("click", () => go(+slider.value + 1));
 slider.addEventListener("input", () => go(+slider.value));
@@ -126,5 +142,6 @@ slider.addEventListener("input", () => go(+slider.value));
   slider.max = String(snaps.length - 1);
   slider.value = String(snaps.length - 1);
   setEnabled(true, slider, prevBtn, nextBtn);
+  show(controlsEl, true);
   label(snaps.length - 1);
 })();
