@@ -12,6 +12,7 @@ import * as logger from "./logger.js";
 export const DEFAULTS = Object.freeze({
   theme: "dark",              // "dark" | "light" | "auto"
   autoplaySpeed: AUTOPLAY_DEFAULT_SPEED, // index into AUTOPLAY_SPEEDS
+  loopAutoplay: false,        // when autoplay hits "now", jump back to the start?
   verboseLogging: true,       // the noisy [Reverser] console trail
   showStats: true,            // the little "spans 1998-2024 · 240 snapshots" footer
 });
