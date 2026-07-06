@@ -28,5 +28,13 @@ export const LOADER_LOOKUP_MS = 25000;  // longer backstop for the first lookup
 export const PHRASE_ROTATE_MS = 10000;  // how often the loading line changes
 export const TOAST_MS = 2600;           // how long a toast sticks around
 
+// --- autoplay ("play through time") --------------------------------------
+export const AUTOPLAY_SPEEDS = [
+  { label: "0.5×", ms: 4000 },
+  { label: "1×", ms: 2500 },
+  { label: "2×", ms: 1200 },
+];
+export const AUTOPLAY_DEFAULT_SPEED = 1; // index into AUTOPLAY_SPEEDS
+
 // --- settings ------------------------------------------------------------
 export const SETTINGS_KEY = "reverser:settings";

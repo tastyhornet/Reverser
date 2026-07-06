@@ -4,13 +4,14 @@
 // and re-render when they change. everything behind the ⚙ button routes through
 // here.
 
-import { SETTINGS_KEY } from "./constants.js";
+import { SETTINGS_KEY, AUTOPLAY_DEFAULT_SPEED } from "./constants.js";
 import * as logger from "./logger.js";
 
 // the shape of a fresh install. adding a new setting is just a new line here -
 // merge() below makes sure older stored blobs pick up the new default.
 export const DEFAULTS = Object.freeze({
   theme: "dark",              // "dark" | "light" | "auto"
+  autoplaySpeed: AUTOPLAY_DEFAULT_SPEED, // index into AUTOPLAY_SPEEDS
   verboseLogging: true,       // the noisy [Reverser] console trail
   showStats: true,            // the little "spans 1998-2024 · 240 snapshots" footer
 });
