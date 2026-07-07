@@ -170,7 +170,7 @@ body {
 }
 .stop:hover { background: var(--danger-hi); }
 
-/* play-through-time row */
+/* play-through-time + share row */
 .controls {
   display: flex;
   gap: 8px;

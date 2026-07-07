@@ -6,6 +6,7 @@ import { loadSnapshots } from "./js/snapshots.js";
 import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import { createLoader } from "./js/loader.js";
+import { shareSnapshot } from "./js/share.js";
 import { createAutoplay } from "./js/autoplay.js";
 import { initTheme } from "./js/theme.js";
 import { mountToast } from "./js/toast.js";
@@ -20,6 +21,7 @@ const prevBtn = el("prev");
 const nextBtn = el("next");
 const stopBtn = el("stop");
 const playBtn = el("play");
+const shareBtn = el("share");
 const controlsEl = el("controls");
 
 const loaderUi = createLoader({
@@ -82,6 +84,11 @@ stopBtn.addEventListener("click", backToLive);
 playBtn.addEventListener("click", () => {
   autoplay.toggle();
   setText(playBtn, autoplay.running() ? "⏸ Pause" : "▶ Play");
+});
+
+shareBtn.addEventListener("click", () => {
+  const ts = snaps[+slider.value].ts;
+  shareSnapshot(ts, origin);
 });
 prevBtn.addEventListener("click", () => go(+slider.value - 1));
 nextBtn.addEventListener("click", () => go(+slider.value + 1));
