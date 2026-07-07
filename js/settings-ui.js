@@ -17,6 +17,7 @@ export function initSettingsPanel() {
   bindSelect("set-theme", "theme");
   bindSelect("set-speed", "autoplaySpeed", Number);
   bindCheckbox("set-loop", "loopAutoplay");
+  bindCheckbox("set-history", "rememberHistory");
   bindCheckbox("set-stats", "showStats");
   bindCheckbox("set-verbose", "verboseLogging");
 
@@ -52,6 +53,7 @@ function syncControls() {
   setValue("set-theme", s.theme);
   setValue("set-speed", String(s.autoplaySpeed));
   setChecked("set-loop", s.loopAutoplay);
+  setChecked("set-history", s.rememberHistory);
   setChecked("set-stats", s.showStats);
   setChecked("set-verbose", s.verboseLogging);
 }
