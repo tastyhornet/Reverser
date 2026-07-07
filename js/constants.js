@@ -36,5 +36,9 @@ export const AUTOPLAY_SPEEDS = [
 ];
 export const AUTOPLAY_DEFAULT_SPEED = 1; // index into AUTOPLAY_SPEEDS
 
+// --- history -------------------------------------------------------------
+export const HISTORY_KEY = "reverser:history";
+export const HISTORY_MAX = 8;           // how many recent sites we keep
+
 // --- settings ------------------------------------------------------------
 export const SETTINGS_KEY = "reverser:settings";
