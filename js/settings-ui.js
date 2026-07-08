@@ -1,10 +1,10 @@
 // settings-ui.js - the DOM side of the gear panel. gear.js owns the data; this
 // owns the drawer: opening/closing it, binding each control to a setting in both
-// directions, rendering the "recently reversed" list, and the reset button. kept
-// apart from popup.js so the main flow stays about scrubbing.
+// directions, rendering the "recently reversed" list, and the clear/reset
+// buttons. kept apart from popup.js so the main flow stays about scrubbing.
 
 import { el, show } from "./dom.js";
-import { getHistory } from "./history.js";
+import { getHistory, clearHistory } from "./history.js";
 import { toast } from "./toast.js";
 import * as gear from "./gear.js";
 
@@ -25,6 +25,12 @@ export function initSettingsPanel() {
   bindCheckbox("set-history", "rememberHistory");
   bindCheckbox("set-stats", "showStats");
   bindCheckbox("set-verbose", "verboseLogging");
+
+  el("clear-history").addEventListener("click", async () => {
+    await clearHistory();
+    await renderRecents();
+    toast("History cleared");
+  });
 
   el("reset-settings").addEventListener("click", async () => {
     await gear.resetSettings();
