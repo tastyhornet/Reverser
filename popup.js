@@ -80,6 +80,7 @@ chrome.tabs.onUpdated.addListener((id, info) => {
 
 // drop out of the archive and back to the real page.
 function backToLive() {
+  if (gear.get("confirmBackToLive") && !confirm("Leave the archive and return to the live page?")) return;
   autoplay.stop();
   chrome.tabs.update(tabId, { url: origin });
   window.close();
