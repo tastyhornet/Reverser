@@ -9,6 +9,7 @@ import { createLoader } from "./js/loader.js";
 import { mountToast } from "./js/toast.js";
 import * as gear from "./js/gear.js";
 import * as logger from "./js/logger.js";
+import { initSettingsPanel } from "./js/settings-ui.js";
 
 const siteEl = el("site");
 const whenEl = el("when");
@@ -73,6 +74,7 @@ slider.addEventListener("input", () => go(+slider.value));
   // settings have to be up before anything reads a pref.
   await gear.loadSettings();
   mountToast(el("toast"));
+  initSettingsPanel();
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || !isweb(tab.url)) {
