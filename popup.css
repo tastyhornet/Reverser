@@ -189,6 +189,15 @@ body {
 }
 .pill:hover { background: var(--panel-hi); }
 
+/* "1998-2024 · 240 snapshots" footer */
+.stats {
+  font-size: 11px;
+  color: var(--faint);
+  text-align: center;
+  letter-spacing: 0.02em;
+  margin: 8px 0 0;
+}
+
 /* settings drawer */
 .settings {
   margin-top: 12px;
