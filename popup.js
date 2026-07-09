@@ -6,6 +6,7 @@ import { loadSnapshots } from "./js/snapshots.js";
 import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import { createLoader } from "./js/loader.js";
+import { initTheme } from "./js/theme.js";
 import { mountToast } from "./js/toast.js";
 import * as gear from "./js/gear.js";
 import * as logger from "./js/logger.js";
@@ -73,6 +74,7 @@ slider.addEventListener("input", () => go(+slider.value));
 (async () => {
   // settings have to be up before anything reads a pref.
   await gear.loadSettings();
+  initTheme();
   mountToast(el("toast"));
   initSettingsPanel();
 
