@@ -72,7 +72,7 @@ body {
   margin: 0 0 12px;
 }
 
-/* slider */
+/* slider + step buttons */
 .scrub {
   display: flex;
   align-items: center;
@@ -169,6 +169,25 @@ body {
   cursor: pointer;
 }
 .stop:hover { background: var(--danger-hi); }
+
+/* play-through-time row */
+.controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.pill {
+  flex: 1;
+  font: inherit;
+  font-weight: 600;
+  background: var(--panel);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.pill:hover { background: var(--panel-hi); }
 
 /* settings drawer */
 .settings {
