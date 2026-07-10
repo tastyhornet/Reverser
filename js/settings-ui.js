@@ -15,6 +15,7 @@ export function initSettingsPanel() {
   gearBtn.addEventListener("click", () => show(panel, panel.hidden));
 
   bindSelect("set-theme", "theme");
+  bindSelect("set-speed", "autoplaySpeed", Number);
   bindCheckbox("set-stats", "showStats");
   bindCheckbox("set-verbose", "verboseLogging");
 
@@ -48,6 +49,7 @@ function bindCheckbox(id, key) {
 function syncControls() {
   const s = gear.getSettings();
   setValue("set-theme", s.theme);
+  setValue("set-speed", String(s.autoplaySpeed));
   setChecked("set-stats", s.showStats);
   setChecked("set-verbose", s.verboseLogging);
 }
