@@ -16,6 +16,7 @@ export function initSettingsPanel() {
 
   bindSelect("set-theme", "theme");
   bindSelect("set-speed", "autoplaySpeed", Number);
+  bindCheckbox("set-loop", "loopAutoplay");
   bindCheckbox("set-stats", "showStats");
   bindCheckbox("set-verbose", "verboseLogging");
 
@@ -50,6 +51,7 @@ function syncControls() {
   const s = gear.getSettings();
   setValue("set-theme", s.theme);
   setValue("set-speed", String(s.autoplaySpeed));
+  setChecked("set-loop", s.loopAutoplay);
   setChecked("set-stats", s.showStats);
   setChecked("set-verbose", s.verboseLogging);
 }

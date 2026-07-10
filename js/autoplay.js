@@ -1,7 +1,8 @@
 // autoplay - the "play through time" button. instead of dragging, hit ▶ and the
 // slider walks itself forward one snapshot at a time so you can watch a site age
-// on its own. speed comes from settings; this only knows about an index and a
-// callback - the popup owns the actual navigation.
+// on its own. speed comes from settings; it can loop back to the start or just
+// stop when it reaches "now". this only knows about an index and a callback - the
+// popup owns the actual navigation.
 
 import { AUTOPLAY_SPEEDS } from "./constants.js";
 import * as gear from "./gear.js";
@@ -18,10 +19,15 @@ export function createAutoplay({ step, bounds, onStop }) {
   function tick() {
     const { index, max } = bounds();
     if (index >= max) {
-      stop();
-      return;
+      if (gear.get("loopAutoplay")) {
+        step(0); // wrap back to the oldest snapshot and keep going
+      } else {
+        stop();
+        return;
+      }
+    } else {
+      step(index + 1);
     }
-    step(index + 1);
   }
 
   function start() {
