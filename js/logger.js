@@ -28,3 +28,10 @@ export function warn(...args) {
 export function error(...args) {
   console.error(TAG, ...args);
 }
+
+// group a set of related lines under one collapsible header in devtools.
+export function group(title, fn) {
+  if (!VERBOSE) { fn(); return; }
+  console.groupCollapsed(TAG, title);
+  try { fn(); } finally { console.groupEnd(); }
+}
