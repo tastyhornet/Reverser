@@ -7,6 +7,7 @@ import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import { createLoader } from "./js/loader.js";
 import { shareSnapshot } from "./js/share.js";
+import { recordVisit } from "./js/history.js";
 import { createAutoplay } from "./js/autoplay.js";
 import { initKeyboard } from "./js/keyboard.js";
 import { initTheme } from "./js/theme.js";
@@ -64,6 +65,7 @@ function go(i) {
     show(stopBtn, true);
     loaderUi.navigating = true;
     loaderUi.start();
+    recordVisit(origin, snaps.length); // remember we've been here
   }, NAV_DEBOUNCE_MS);
 }
 
