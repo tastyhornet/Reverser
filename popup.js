@@ -8,6 +8,7 @@ import { getCached, setCached } from "./js/cache.js";
 import { createLoader } from "./js/loader.js";
 import { shareSnapshot } from "./js/share.js";
 import { createAutoplay } from "./js/autoplay.js";
+import { initKeyboard } from "./js/keyboard.js";
 import { initTheme } from "./js/theme.js";
 import { mountToast } from "./js/toast.js";
 import * as gear from "./js/gear.js";
@@ -93,6 +94,16 @@ shareBtn.addEventListener("click", () => {
 prevBtn.addEventListener("click", () => go(+slider.value - 1));
 nextBtn.addEventListener("click", () => go(+slider.value + 1));
 slider.addEventListener("input", () => go(+slider.value));
+
+// keyboard scrubbing once the popup is focused.
+initKeyboard({
+  prev: () => go(+slider.value - 1),
+  next: () => go(+slider.value + 1),
+  first: () => go(0),
+  last: () => go(snaps.length - 1),
+  togglePlay: () => playBtn.click(),
+  backToLive,
+});
 
 (async () => {
   // settings have to be up before anything reads a pref.
