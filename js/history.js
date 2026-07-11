@@ -1,9 +1,11 @@
 // "recently reversed" list. every time you scrub a site we drop it here so the
 // popup can show a few one-click shortcuts back to sites you've time-travelled
-// before. persisted in chrome.storage.local, capped, most-recent-first.
+// before. persisted in chrome.storage.local, capped, most-recent-first, and
+// gated behind the rememberHistory setting.
 
 import { HISTORY_KEY, HISTORY_MAX } from "./constants.js";
 import { hostnameOf } from "./urls.js";
+import * as gear from "./gear.js";
 import * as logger from "./logger.js";
 
 // read the list back, newest first. always returns an array.
@@ -18,9 +20,10 @@ export async function getHistory() {
   }
 }
 
-// record a visit. dedupes by url (moving an existing entry to the front), stamps
+// record a visit. no-op when the setting is off. dedupes by url (moving an existing entry to the front), stamps
 // the time, and trims to HISTORY_MAX.
 export async function recordVisit(url, snapshotCount = 0) {
+  if (!gear.get("rememberHistory")) return;
   try {
     const list = await getHistory();
     const filtered = list.filter((e) => e.url !== url);
