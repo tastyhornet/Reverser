@@ -40,3 +40,13 @@ export async function recordVisit(url, snapshotCount = 0) {
     logger.warn("history write failed:", e.message);
   }
 }
+
+// wipe it (the gear panel offers this).
+export async function clearHistory() {
+  try {
+    await chrome.storage.local.remove(HISTORY_KEY);
+    logger.log("history cleared");
+  } catch (e) {
+    logger.warn("history clear failed:", e.message);
+  }
+}
