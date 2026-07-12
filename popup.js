@@ -6,6 +6,7 @@ import { loadSnapshots } from "./js/snapshots.js";
 import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import { createLoader } from "./js/loader.js";
+import { summaryLine } from "./js/stats.js";
 import { shareSnapshot } from "./js/share.js";
 import { recordVisit } from "./js/history.js";
 import { createAutoplay } from "./js/autoplay.js";
@@ -25,6 +26,7 @@ const stopBtn = el("stop");
 const playBtn = el("play");
 const shareBtn = el("share");
 const controlsEl = el("controls");
+const statsEl = el("stats");
 
 const loaderUi = createLoader({
   loader: el("loader"),
@@ -97,6 +99,13 @@ prevBtn.addEventListener("click", () => go(+slider.value - 1));
 nextBtn.addEventListener("click", () => go(+slider.value + 1));
 slider.addEventListener("input", () => go(+slider.value));
 
+// paint the little "1998–2024 · 240 snapshots" footer.
+function renderStats() {
+  if (!snaps.length) { show(statsEl, false); return; }
+  setText(statsEl, summaryLine(snaps));
+  show(statsEl, true);
+}
+
 // keyboard scrubbing once the popup is focused.
 initKeyboard({
   prev: () => go(+slider.value - 1),
@@ -164,4 +173,5 @@ initKeyboard({
   setEnabled(true, slider, prevBtn, nextBtn);
   show(controlsEl, true);
   label(snaps.length - 1);
+  renderStats();
 })();
