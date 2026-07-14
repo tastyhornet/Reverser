@@ -20,8 +20,8 @@ export async function getHistory() {
   }
 }
 
-// record a visit. no-op when the setting is off. dedupes by url (moving an existing entry to the front), stamps
-// the time, and trims to HISTORY_MAX.
+// record a visit. no-op when the setting is off. dedupes by url (moving an
+// existing entry to the front), stamps the time, and trims to HISTORY_MAX.
 export async function recordVisit(url, snapshotCount = 0) {
   if (!gear.get("rememberHistory")) return;
   try {
