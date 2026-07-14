@@ -1,9 +1,11 @@
-// reverser popup - figures out what page you're on and looks up its history.
+// reverser popup - entry point. builds a slider of wayback snapshots for the
+// current tab and scrubs the real tab through them: every move replaces the whole
+// page with that archived version. "back to live" sends the tab back to the real
+// url. this file is the orchestrator - the actual work lives in ./js/*.
 
 import { el, show, setText, setEnabled } from "./js/dom.js";
 import { isweb, originOf, archiveUrl, timestampOf } from "./js/urls.js";
 import { loadSnapshots } from "./js/snapshots.js";
-import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
 import { createLoader } from "./js/loader.js";
 import { summaryLine } from "./js/stats.js";
@@ -12,21 +14,22 @@ import { recordVisit } from "./js/history.js";
 import { createAutoplay } from "./js/autoplay.js";
 import { initKeyboard } from "./js/keyboard.js";
 import { initTheme } from "./js/theme.js";
-import { mountToast } from "./js/toast.js";
+import { mountToast, toast } from "./js/toast.js";
+import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import * as gear from "./js/gear.js";
 import * as logger from "./js/logger.js";
 import { initSettingsPanel } from "./js/settings-ui.js";
 
-const siteEl = el("site");
-const whenEl = el("when");
 const slider = el("slider");
+const whenEl = el("when");
+const siteEl = el("site");
+const statsEl = el("stats");
 const prevBtn = el("prev");
 const nextBtn = el("next");
 const stopBtn = el("stop");
 const playBtn = el("play");
 const shareBtn = el("share");
 const controlsEl = el("controls");
-const statsEl = el("stats");
 
 const loaderUi = createLoader({
   loader: el("loader"),
@@ -34,6 +37,11 @@ const loaderUi = createLoader({
   lline: el("lline"),
   ltext: el("ltext"),
 });
+
+let tabId = null;
+let origin = null;     // the real url we're time-travelling
+let snaps = [];        // [{ ts, label }] oldest -> newest
+let navTimer = null;
 
 // autoplay walks the slider forward on its own; it only knows an index + a step
 // callback, so navigation stays here in one place.
@@ -43,19 +51,19 @@ const autoplay = createAutoplay({
   onStop: () => setText(playBtn, "▶ Play"),
 });
 
-let tabId = null;
-let origin = null;   // the real url we're time-travelling
-let snaps = [];      // [{ ts, label }] oldest -> newest
-let navTimer = null;
+// hide the loader once the snapshot page actually finishes loading. scoped to a
+// real navigation so a stray "complete" from the live tab can't kill the loader
+// we show during the initial fetch.
+chrome.tabs.onUpdated.addListener((id, info) => {
+  if (loaderUi.navigating && id === tabId && info.status === "complete") loaderUi.stop();
+});
 
 function label(i) {
   setText(whenEl, `${snaps[i].label}  ·  ${i + 1} of ${snaps.length}`);
 }
 
-// move the real tab to a snapshot. this replaces the whole page with the
-// archived version - no iframe, so the old page renders natively.
-// debounced, since a drag fires this a lot and each one is a full page load off
-// a slow server.
+// move the real tab to a snapshot. debounced, since a drag fires this a lot and
+// each one is a full page load off a slow server.
 function go(i) {
   i = Math.max(0, Math.min(snaps.length - 1, i));
   slider.value = String(i);
@@ -71,13 +79,6 @@ function go(i) {
   }, NAV_DEBOUNCE_MS);
 }
 
-// hide the loader once the snapshot page actually finishes loading. scoped to a
-// real navigation so a stray "complete" from the live tab can't kill the loader
-// we show during the initial fetch.
-chrome.tabs.onUpdated.addListener((id, info) => {
-  if (loaderUi.navigating && id === tabId && info.status === "complete") loaderUi.stop();
-});
-
 // drop out of the archive and back to the real page.
 function backToLive() {
   if (gear.get("confirmBackToLive") && !confirm("Leave the archive and return to the live page?")) return;
@@ -86,7 +87,11 @@ function backToLive() {
   window.close();
 }
 
+prevBtn.addEventListener("click", () => go(+slider.value - 1));
+nextBtn.addEventListener("click", () => go(+slider.value + 1));
+slider.addEventListener("input", () => go(+slider.value));
 stopBtn.addEventListener("click", backToLive);
+
 playBtn.addEventListener("click", () => {
   autoplay.toggle();
   setText(playBtn, autoplay.running() ? "⏸ Pause" : "▶ Play");
@@ -96,17 +101,6 @@ shareBtn.addEventListener("click", () => {
   const ts = snaps[+slider.value].ts;
   shareSnapshot(ts, origin);
 });
-prevBtn.addEventListener("click", () => go(+slider.value - 1));
-nextBtn.addEventListener("click", () => go(+slider.value + 1));
-slider.addEventListener("input", () => go(+slider.value));
-
-// paint (or clear) the little "1998–2024 · 240 snapshots" footer.
-function renderStats() {
-  if (!gear.get("showStats") || !snaps.length) { show(statsEl, false); return; }
-  setText(statsEl, summaryLine(snaps));
-  show(statsEl, true);
-}
-gear.onChange((key) => { if (key === "showStats") renderStats(); });
 
 // keyboard scrubbing once the popup is focused.
 initKeyboard({
@@ -118,8 +112,16 @@ initKeyboard({
   backToLive,
 });
 
+// paint (or clear) the little "1998–2024 · 240 snapshots" footer.
+function renderStats() {
+  if (!gear.get("showStats") || !snaps.length) { show(statsEl, false); return; }
+  setText(statsEl, summaryLine(snaps));
+  show(statsEl, true);
+}
+gear.onChange((key) => { if (key === "showStats") renderStats(); });
+
 (async () => {
-  // settings have to be up before anything reads a pref.
+  // settings + theme + toast host have to be up before anything reads a pref.
   await gear.loadSettings();
   logger.setVerbose(gear.get("verboseLogging"));
   initTheme();
@@ -193,3 +195,7 @@ initKeyboard({
   label(start);
   renderStats();
 })();
+
+// the old build opened a separate tab with the snapshot in an iframe and stripped
+// x-frame-options via declarativeNetRequest. replacing the whole tab is simpler
+// and renders the archived page natively, so the iframe version got dropped.
