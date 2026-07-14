@@ -1,7 +1,7 @@
 // reverser popup - figures out what page you're on and looks up its history.
 
 import { el, show, setText, setEnabled } from "./js/dom.js";
-import { isweb, originOf, archiveUrl } from "./js/urls.js";
+import { isweb, originOf, archiveUrl, timestampOf } from "./js/urls.js";
 import { loadSnapshots } from "./js/snapshots.js";
 import { NAV_DEBOUNCE_MS, LOADER_LOOKUP_MS } from "./js/constants.js";
 import { getCached, setCached } from "./js/cache.js";
@@ -136,10 +136,11 @@ initKeyboard({
 
   tabId = tab.id;
   origin = originOf(tab.url);
-  // already sitting on an archived page? then offer the way back straight away.
-  if (origin !== tab.url) show(stopBtn, true);
+  const onArchive = origin !== tab.url; // already mid-reverse
   setText(siteEl, new URL(origin).hostname);
-  logger.log("tab url:", tab.url, "| origin:", origin);
+  if (onArchive) show(stopBtn, true);
+
+  logger.log("tab url:", tab.url, "| origin:", origin, "| onArchive:", onArchive);
 
   // use the cached result if we've already looked this site up this session
   let result = await getCached(origin);
@@ -147,7 +148,7 @@ initKeyboard({
     logger.log("using cached result for", origin, "-", result.snaps.length, "snapshots");
   } else {
     setText(whenEl, "");
-    loaderUi.start(LOADER_LOOKUP_MS); // the first lookup on a big site can take a while
+    loaderUi.start(LOADER_LOOKUP_MS); // the per-year sampling on huge sites can take ~10-15s
     try {
       result = await loadSnapshots(origin);
     } catch (e) {
@@ -158,22 +159,37 @@ initKeyboard({
     }
     if (result.snaps.length) setCached(origin, result);
   }
-  origin = result.matched;  // navigate using the url we actually found history for
-  snaps = result.snaps;
-  if (!snaps.length) {
+
+  if (!result.snaps.length) {
     loaderUi.hide();
     setText(whenEl, "no snapshots found for this page");
     logger.warn("no snapshots after all fallbacks for", origin);
     return;
   }
 
-  loaderUi.stop(); // history loaded, not loading anymore
+  loaderUi.stop(); // history loaded, not loading anymore -> "There you go!"
 
-  // one stop per snapshot, oldest on the left, newest on the right.
+  origin = result.matched; // navigate using the url we actually found history for
+  snaps = result.snaps;
+  logger.log("ready -", snaps.length, "snapshots; navigating via", origin);
   slider.max = String(snaps.length - 1);
-  slider.value = String(snaps.length - 1);
+
+  // start pinned to the most recent snapshot (the right / "now" end). only when
+  // the tab is ALREADY an archive page do we line the thumb up with that snapshot
+  // - on a live page it always defaults to the right, and nothing navigates until
+  // you actually move the slider.
+  let start = snaps.length - 1;
+  if (onArchive) {
+    const cur = timestampOf(tab.url);
+    if (cur) {
+      const stub = cur.slice(0, 6);
+      const idx = snaps.findIndex((s) => s.ts.startsWith(stub));
+      if (idx >= 0) start = idx;
+    }
+  }
+  slider.value = String(start);
   setEnabled(true, slider, prevBtn, nextBtn);
   show(controlsEl, true);
-  label(snaps.length - 1);
+  label(start);
   renderStats();
 })();
