@@ -99,12 +99,13 @@ prevBtn.addEventListener("click", () => go(+slider.value - 1));
 nextBtn.addEventListener("click", () => go(+slider.value + 1));
 slider.addEventListener("input", () => go(+slider.value));
 
-// paint the little "1998–2024 · 240 snapshots" footer.
+// paint (or clear) the little "1998–2024 · 240 snapshots" footer.
 function renderStats() {
-  if (!snaps.length) { show(statsEl, false); return; }
+  if (!gear.get("showStats") || !snaps.length) { show(statsEl, false); return; }
   setText(statsEl, summaryLine(snaps));
   show(statsEl, true);
 }
+gear.onChange((key) => { if (key === "showStats") renderStats(); });
 
 // keyboard scrubbing once the popup is focused.
 initKeyboard({
